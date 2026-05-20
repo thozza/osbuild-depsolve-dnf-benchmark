@@ -1,0 +1,17 @@
+{
+	"api_version": 2,
+	"command": "dump",
+	"arch": "x86_64",
+	"releasever": "45",
+	"cachedir": "/tmp/depsolve-dnf",
+	"arguments": {
+		"repos": [
+			{
+				"id": "fedora",
+				"name": "fedora",
+				"baseurl": ["https://dl01.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/x86_64/os/"],
+				"gpgcheck": false
+			}
+		]
+	}
+}

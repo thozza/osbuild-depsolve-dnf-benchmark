@@ -1,0 +1,50 @@
+{
+	"api_version": 2,
+	"command": "depsolve",
+	"arch": "x86_64",
+	"releasever": "45",
+	"cachedir": "/tmp/depsolve-dnf",
+	"arguments": {
+		"repos": [
+			{
+				"id": "fedora",
+				"name": "fedora",
+				"baseurl": ["https://dl01.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/x86_64/os/"],
+				"gpgcheck": false
+			}
+		],
+		"transactions": [
+			{
+				"package-specs": ["@core"],
+				"install_weak_deps": true
+			},
+			{
+				"package-specs": ["unbound", "osbuild"],
+				"install_weak_deps": true
+			},
+			{
+			"package-specs": [
+					"@cloud-server-environment",
+					"amazon-ec2-utils",
+					"awscli2",
+					"btrfs-progs",
+					"dosfstools",
+					"dracut-config-generic",
+					"ec2-instance-connect",
+					"efibootmgr",
+					"glibc-langpack-en",
+					"grub2-efi-x64",
+					"grub2-tools",
+					"kernel",
+					"python3-dnf-plugin-tracer",
+					"selinux-policy-targeted",
+					"shim-x64"
+				],
+				"install_weak_deps": true
+			}
+		],
+		"sbom": {
+			"type": "spdx"
+		}
+	}
+}
