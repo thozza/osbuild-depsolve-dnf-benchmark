@@ -37,6 +37,30 @@ from pathlib import Path
 ALL_COMMANDS = ["dump", "search", "depsolve"]
 
 
+def get_git_specifier(repo_path: str) -> str | None:
+    """Return a version specifier from the git repo at *repo_path*.
+
+    Uses the tag name if HEAD is tagged, otherwise short SHA + commit title.
+    Returns None when *repo_path* is not inside a git repository or git is
+    not available.
+    """
+    tag_result = subprocess.run(
+        ["git", "-C", repo_path, "describe", "--tags", "--exact-match", "HEAD"],
+        capture_output=True, text=True,
+    )
+    if tag_result.returncode == 0:
+        return tag_result.stdout.strip()
+
+    log_result = subprocess.run(
+        ["git", "-C", repo_path, "log", "-1", "--format=%h %s", "HEAD"],
+        capture_output=True, text=True,
+    )
+    if log_result.returncode == 0:
+        return log_result.stdout.strip()
+
+    return None
+
+
 def resolve_query_file(queries_dir: Path, command: str, api_version: int) -> Path:
     if api_version == 1:
         return queries_dir / f"{command}.json"
@@ -184,10 +208,15 @@ def run_benchmark(tool_path: str, query_file: Path, env: dict,
     return {"runtimes": runtimes, "peak_memories": peak_memories}
 
 
-def print_summary(results: dict, api_version: int, iterations: int, solver_name: str):
-    print(f"\n{'=' * 90}")
-    print(f"Benchmark Results (API v{api_version}, {solver_name}, {iterations} iterations)")
-    print(f"{'=' * 90}")
+def print_summary(results: dict, api_version: int, iterations: int,
+                   solver_name: str, specifier: str | None = None):
+    title = f"Benchmark Results (API v{api_version}, {solver_name}, {iterations} iterations)"
+    if specifier:
+        title += f" - {specifier}"
+    banner_width = max(len(title) + 4, 90)
+    print(f"\n{'=' * banner_width}")
+    print(title)
+    print(f"{'=' * banner_width}")
 
     hdr_cmd = "Command"
     hdr_rt = "Avg Runtime (s)"
@@ -264,6 +293,11 @@ def main():
         "--dnf5", action="store_true", default=False,
         help="Use the dnf5 solver instead of the default dnf solver",
     )
+    parser.add_argument(
+        "--specifier", default=None,
+        help="Version specifier for the banner (e.g. tag or commit). "
+             "Auto-detected from the PYTHONPATH git repo if not provided.",
+    )
     args = parser.parse_args()
 
     tool_path = os.path.abspath(args.tool_path)
@@ -302,6 +336,7 @@ def main():
         env["OSBUILD_SOLVER_CONFIG"] = solver_config_path
 
     solver_name = "DNF5" if args.dnf5 else "DNF4"
+    specifier = args.specifier or get_git_specifier(pythonpath)
 
     try:
         print(f"Benchmarking osbuild-depsolve-dnf (API v{args.api_version})")
@@ -321,7 +356,7 @@ def main():
                 profile=args.profile, api_version=args.api_version,
             )
 
-        print_summary(results, args.api_version, args.iterations, solver_name)
+        print_summary(results, args.api_version, args.iterations, solver_name, specifier)
     finally:
         if solver_config_path and os.path.exists(solver_config_path):
             os.unlink(solver_config_path)
