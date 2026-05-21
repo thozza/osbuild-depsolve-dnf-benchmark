@@ -184,9 +184,9 @@ def run_benchmark(tool_path: str, query_file: Path, env: dict,
     return {"runtimes": runtimes, "peak_memories": peak_memories}
 
 
-def print_summary(results: dict, api_version: int, iterations: int):
+def print_summary(results: dict, api_version: int, iterations: int, solver_name: str):
     print(f"\n{'=' * 90}")
-    print(f"Benchmark Results (API v{api_version}, {iterations} iterations)")
+    print(f"Benchmark Results (API v{api_version}, {solver_name}, {iterations} iterations)")
     print(f"{'=' * 90}")
 
     hdr_cmd = "Command"
@@ -301,7 +301,7 @@ def main():
             json.dump({"use_dnf5": True}, f)
         env["OSBUILD_SOLVER_CONFIG"] = solver_config_path
 
-    solver_name = "dnf5" if args.dnf5 else "dnf"
+    solver_name = "DNF5" if args.dnf5 else "DNF4"
 
     try:
         print(f"Benchmarking osbuild-depsolve-dnf (API v{args.api_version})")
@@ -321,7 +321,7 @@ def main():
                 profile=args.profile, api_version=args.api_version,
             )
 
-        print_summary(results, args.api_version, args.iterations)
+        print_summary(results, args.api_version, args.iterations, solver_name)
     finally:
         if solver_config_path and os.path.exists(solver_config_path):
             os.unlink(solver_config_path)
